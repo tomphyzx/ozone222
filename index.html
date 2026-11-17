@@ -4,14 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ozone222 — Far-UVC Ozone vs. Ventilation Calculator</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%235b3fd1'/%3E%3C/svg%3E">
 <style>
   :root{
     --bg:#f7f8fa; --panel:#ffffff; --ink:#1b1f24; --muted:#5d6672; --line:#dde1e6;
-    --accent:#5b3fd1; --accent2:#0e8a7d; --warn:#b4471b; --ok:#1d7a3e; --hl:#efeafd;
+    --accent:#5b3fd1; --accent2:#0e8a7d; --warn:#b4471b; --ok:#1d7a3e; --hl:#efeafd; --bad:#c62828;
   }
   @media (prefers-color-scheme: dark){
     :root{ --bg:#14161a; --panel:#1c1f24; --ink:#e8eaed; --muted:#9aa3ad; --line:#2e333a;
-      --accent:#a48cff; --accent2:#3cc7b6; --warn:#ff8a5c; --ok:#5fd38a; --hl:#2a2540; }
+      --accent:#a48cff; --accent2:#3cc7b6; --warn:#ff8a5c; --ok:#5fd38a; --hl:#2a2540; --bad:#ff6b6b; }
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -23,9 +24,13 @@
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
   .panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:4px 0 10px}
   .panel h2:not(:first-child){margin-top:18px}
-  label{display:grid;grid-template-columns:1fr 110px;align-items:center;gap:8px;margin:6px 0;font-size:14px}
-  label small{display:block;color:var(--muted);font-size:12px;line-height:1.3}
+  label{display:grid;grid-template-columns:1fr 110px;align-items:center;column-gap:8px;margin:6px 0;font-size:14px}
+  label small{display:block;grid-column:1;color:var(--muted);font-size:12px;line-height:1.3}
+  label:has(small:not(.err)) :is(input,select){grid-column:2;grid-row:1 / span 2}   /* field sits beside the label text and its hint */
   input,select{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;font-variant-numeric:tabular-nums}
+  input.bad{border-color:var(--bad);outline:1px solid var(--bad)}
+  label small.err{grid-column:1/-1;color:var(--bad);margin-top:3px}
+  label small.err:empty{display:none}
   .seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:8px}
   .seg button{flex:1;padding:6px;border:0;background:transparent;color:var(--muted);font:inherit;cursor:pointer}
   .seg button.on{background:var(--accent);color:#fff}
@@ -75,7 +80,7 @@
   <label>Max modules to show <input id="N" type="number" step="1" value="10"></label>
 
   <h2>Target and other sinks</h2>
-  <label>Target added O<sub>3</sub><small>ppb (5 ppb limit − 1 ppb margin)</small><input id="tgt" type="number" step="0.1" value="4"></label>
+  <label>Target added O₃<small>ppb (5 ppb limit − 1 ppb margin)</small><input id="tgt" type="number" step="0.1" value="4"></label>
   <label>Surface deposition<small>h⁻¹ (0 = most conservative)</small><input id="kd" type="number" step="0.1" value="1"></label>
   <label>Room's actual outdoor-air ACH<small>optional, highlights the max modules</small><input id="ach" type="number" step="0.1" value="2"></label>
 
@@ -92,7 +97,7 @@
     <div class="kpi"><div class="v" id="kG">–</div><div class="l">O₃ generated per module (ppb/h)</div></div>
     <div class="kpi"><div class="v" id="kA">–</div><div class="l">Extra ACH needed per module</div></div>
     <div class="kpi"><div class="v" id="kF">–</div><div class="l">Room-avg 222 nm fluence per module (µW/cm²)</div></div>
-    <div class="kpi"><div class="v" id="kM">–</div><div class="l">Max modules at the room's ACH</div></div>
+    <div class="kpi"><div class="v" id="kM">–</div><div class="l">Max modules at the room's ACH</div><div class="l" id="kMnote" style="color:var(--warn)"></div></div>
   </div>
   <div class="panel">
     <h2>Required outdoor-air ACH vs. number of modules</h2>
@@ -114,7 +119,7 @@
   <h3>Assumptions and limits</h3>
   <p>The room is well mixed and the gas is optically thin. Light is absorbed at the floor and walls, with no reflection. ACH means outdoor (ozone-free) air: recirculated air does not remove ozone unless it passes activated carbon. The result is ozone added on top of outdoor background. Module outputs are estimates from Ushio's on-axis irradiance and beam angle (B1 ≈ 0.11 W, B1.5 ≈ 0.05 W); measure or use the manufacturer's total-output figure if you have it. This tool does not check occupant exposure limits. Not a substitute for measurement.</p>
   <h3>References</h3>
-  <p>Peng et al., <i>ES&amp;T Letters</i> 10, 668 (2023); Link et al. (NIST), <i>ES&amp;T Letters</i> (2023); Barber et al., <i>ES&amp;T</i> 57, 15990 (2023); Ushio Care222 technical data sheet.</p>
+  <p>Peng et al., <i>ES&amp;T Letters</i> 10, 668 (2023); Link et al. (NIST), <i>ES&amp;T Letters</i> 10(8), 675 (2023), doi:10.1021/acs.estlett.3c00318; Barber et al., <i>ES&amp;T</i> 57, 15990 (2023); Ushio Care222 technical data sheet.</p>
   <p>ozone222 · tomPhyzx · MIT License</p>
 </footer>
 
@@ -126,14 +131,22 @@ const sO2 = 4.09e-24, sO3_254 = 1.13e-17;
 const ppb = nAir*1e-9;
 const MODS = { b1:{P:0.11,pf:1.05}, b15:{P:0.05,pf:1.25} };
 let units='ft';
+const FT=0.3048;
 const $=id=>document.getElementById(id);
-const toM = v => units==='ft' ? v*0.3048 : v;
+const num=id=>+$(id).value;
+
+// Room sizes are kept in metres; the fields only display them in the chosen unit.
+const DIMS=['L','W','H','L254'], dim={};
+const show=id=>{ $(id).value = units==='ft' ? +(dim[id]/FT).toFixed(2) : +dim[id].toFixed(3); };
+DIMS.forEach(id=>{
+  dim[id]=num(id)*FT;                                   // the page starts in feet
+  $(id).addEventListener('input',()=>{ dim[id] = units==='ft' ? num(id)*FT : num(id); });
+});
 
 document.querySelectorAll('#units button').forEach(b=>b.onclick=()=>{
-  const nu=b.dataset.u; if(nu===units) return;
-  const f = nu==='m' ? 0.3048 : 1/0.3048;
-  ['L','W','H','L254'].forEach(id=>{ $(id).value = (+$(id).value*f).toFixed(2).replace(/\.?0+$/,''); });
-  units=nu;
+  if(b.dataset.u===units) return;
+  units=b.dataset.u;
+  DIMS.forEach(show);
   document.querySelectorAll('#units button').forEach(x=>x.classList.toggle('on',x===b));
   calc();
 });
@@ -143,41 +156,74 @@ document.querySelectorAll('input').forEach(i=>i.addEventListener('input',calc));
 
 function fmt(x,d=1){ return isFinite(x) ? x.toFixed(d) : '–'; }
 
+// Red border and a one-line note under a field; an empty msg clears both.
+function flag(id,msg){
+  const el=$(id), lab=el.closest('label');
+  let note=lab.querySelector('.err');
+  if(!note){ note=document.createElement('small'); note.className='err'; lab.appendChild(note); }
+  note.textContent=msg||'';
+  el.classList.toggle('bad',!!msg);
+}
+// Returns v held within lo..hi, and flags the field when v was outside.
+function limit(id,v,lo,hi,msg){
+  const ok = v>=lo && v<=hi;
+  flag(id, ok ? '' : msg);
+  return ok ? v : Math.min(hi,Math.max(lo,v));
+}
+
 function calc(){
-  const L=toM(+$('L').value), W=toM(+$('W').value), H=toM(+$('H').value);
+  const L=dim.L, W=dim.W, H=dim.H;
+  ['L','W','H'].forEach(id=>flag(id, dim[id]>0 ? '' : 'Enter a size above 0'));
   const V = L*W*H*1e6;                                 // cm3
-  const P = +$('P').value * (+$('duty').value/100);    // avg W per module
-  const path = H*100*(+$('pf').value);                 // cm
+  const duty = limit('duty', num('duty'), 0, 100, 'Duty limited to 0–100%');
+  const P = limit('P', num('P'), 0, Infinity, 'Negative power treated as 0') * duty/100;   // avg W per module
+  const pf = Math.max(0, num('pf'));
+  flag('pf', pf>=1 ? '' : 'Below 1: path shorter than the ceiling height');
+  const path = H*100*pf;                               // cm
   const phot222 = P*222e-9/(h*c);                      // photons/s per module
   const G1 = 2*sO2*nO2*phot222*path/V*3600/ppb;        // ppb/h per module
   const F1 = P*path/V*1e6;                             // µW/cm2 room avg
-  const phot254 = (+$('P254').value)*254e-9/(h*c);
-  const k254 = (+$('phi').value)*sO3_254*phot254*toM(+$('L254').value)*100/V*3600;
-  const kd=+$('kd').value, tgt=+$('tgt').value, ach=+$('ach').value, N=Math.max(1,Math.min(50,Math.round(+$('N').value)));
+  const P254 = limit('P254', num('P254'), 0, Infinity, 'Negative power treated as 0');
+  const phi = limit('phi', num('phi'), 0, 1, 'Φ limited to 0–1');
+  const phot254 = P254*254e-9/(h*c);
+  const k254 = phi*sO3_254*phot254*dim.L254*100/V*3600;
+  const kd = limit('kd', num('kd'), 0, Infinity, 'Negative deposition treated as 0');
+  const N = Math.max(1,Math.min(50,Math.round(num('N'))));
+  flag('N', num('N')===N ? '' : `Using ${N} (whole number, 1–50)`);
+  const tgt = num('tgt'), tgtOK = tgt>0;
+  flag('tgt', tgtOK ? '' : 'Enter a target above 0 ppb');
+  const hasAch = $('ach').value.trim()!=='';           // blank is "not given"; only an explicit 0 is zero
+  const ach = limit('ach', num('ach'), 0, Infinity, 'Negative ACH treated as 0');
 
-  const rows=[]; let maxN=0;
+  // max modules analytically (may exceed N)
+  const maxAll = Math.floor(tgt*(ach+kd+k254)/G1 + 1e-9);
+  const showMax = tgtOK && hasAch && isFinite(maxAll);
+
+  $('kG').textContent=fmt(G1,2);
+  $('kA').textContent= tgtOK ? fmt(G1/tgt,2) : '–';
+  $('kF').textContent=fmt(F1,2);
+  $('kM').textContent= showMax ? maxAll : '–';
+  $('kMnote').textContent= hasAch ? '' : 'enter room ACH';
+
+  const tb=$('tbl').querySelector('tbody'); tb.innerHTML='';
+  if(!tgtOK){
+    $('chart').innerHTML='<text x="360" y="150" text-anchor="middle" style="font-size:15px">Enter a target above 0 ppb</text>';
+    return;
+  }
+
+  const rows=[];
   for(let n=1;n<=N;n++){
     const G=n*G1, req=Math.max(0,G/tgt-kd-k254);
     const at = (ach+kd+k254)>0 ? G/(ach+kd+k254) : Infinity;
-    if(at<=tgt+1e-9) maxN=n;
     rows.push({n,G,F:n*F1,req,at});
   }
-  // max modules analytically (may exceed N)
-  const maxAll = Math.floor(tgt*(ach+kd+k254)/G1 + 1e-9);
-
-  $('kG').textContent=fmt(G1,2);
-  $('kA').textContent=fmt(G1/tgt,2);
-  $('kF').textContent=fmt(F1,2);
-  $('kM').textContent= isFinite(maxAll) ? maxAll : '–';
-
-  const tb=$('tbl').querySelector('tbody'); tb.innerHTML='';
   rows.forEach(r=>{
     const tr=document.createElement('tr');
-    tr.className=(r.at<=tgt+1e-9?'ok':'over')+(r.n===maxAll?' max':'');
-    tr.innerHTML=`<td>${r.n}</td><td>${fmt(r.G)}</td><td>${fmt(r.F,2)}</td><td>${fmt(r.at)}</td><td>${fmt(r.req,2)}</td>`;
+    if(hasAch) tr.className=(r.at<=tgt+1e-9?'ok':'over')+(r.n===maxAll?' max':'');
+    tr.innerHTML=`<td>${r.n}</td><td>${fmt(r.G)}</td><td>${fmt(r.F,2)}</td><td>${hasAch?fmt(r.at):'–'}</td><td>${fmt(r.req,2)}</td>`;
     tb.appendChild(tr);
   });
-  draw(rows, ach);
+  draw(rows, hasAch ? ach : 0);
 }
 
 function draw(rows, ach){
@@ -185,9 +231,11 @@ function draw(rows, ach){
   const N=rows.length, ymax=Math.max(1, ...rows.map(r=>r.req), ach)*1.1;
   const X=n=>m.l+(n-1)/(Math.max(1,N-1))*(w-m.l-m.r), Y=v=>hgt-m.b-v/ymax*(hgt-m.t-m.b);
   const step=niceStep(ymax/5);
+  if(!(ymax>0 && isFinite(ymax) && step>0 && isFinite(step))){ s.innerHTML=''; return; }
+  const every = N>30 ? 5 : N>20 ? 2 : 1;                // thin the x labels when crowded
   let g='';
   for(let v=0; v<=ymax; v+=step){ g+=`<line x1="${m.l}" x2="${w-m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${m.l-6}" y="${Y(v)+4}" text-anchor="end">${+v.toFixed(2)}</text>`; }
-  rows.forEach(r=>{ g+=`<text x="${X(r.n)}" y="${hgt-m.b+16}" text-anchor="middle">${r.n}</text>`; });
+  rows.forEach(r=>{ if(r.n===1 || r.n%every===0) g+=`<text x="${X(r.n)}" y="${hgt-m.b+16}" text-anchor="middle">${r.n}</text>`; });
   g+=`<text x="${(w+m.l)/2}" y="${hgt-4}" text-anchor="middle">number of 222 nm modules</text>`;
   g+=`<text transform="translate(12,${(hgt-m.b+m.t)/2}) rotate(-90)" text-anchor="middle">required ACH (h⁻¹)</text>`;
   if(ach>0){ g+=`<line x1="${m.l}" x2="${w-m.r}" y1="${Y(ach)}" y2="${Y(ach)}" stroke="var(--accent2)" stroke-dasharray="5 4" stroke-width="1.5"/><text x="${w-m.r}" y="${Y(ach)-6}" text-anchor="end" style="fill:var(--accent2)">room ACH ${ach}</text>`; }

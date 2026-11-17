@@ -2,7 +2,9 @@
 
 A single-page calculator for one question: **how many outdoor-air changes per hour (ACH) keep the ozone *added* by ceiling-mounted 222 nm (far-UVC) modules at or below a target?** It shows the answer for 1 to N modules in a room of given length, width and height.
 
-Open `index.html` in any browser. There's no build step and nothing to install.
+**Live calculator:** https://tomphyzx.github.io/ozone222/
+
+Or open `index.html` in any browser. There's no build step and nothing to install.
 
 ## Model
 
@@ -20,8 +22,11 @@ Open `index.html` in any browser. There's no build step and nothing to install.
 | Input | Default | Notes |
 |---|---|---|
 | Room | 16 × 14 × 9 ft | Typical single-patient room |
+| Room outdoor-air ACH | 2 | ASHRAE 170 patient-room minimum |
 | Module | Ushio Care222 B1, 0.11 W | Estimated from 11.2 µW/cm² on-axis at 1 m with a 60° beam |
 | | Care222 B1.5, 0.05 W | Estimated from 1.6 µW/cm² at 1 m with a 110° beam |
+| Path-length factor | 1.05 (B1), 1.25 (B1.5) | Mean optical path ÷ ceiling height |
+| Duty cycle | 100% | |
 | Target | 4 ppb | 5 ppb limit minus a 1 ppb margin |
 | Surface deposition | 1 h⁻¹ | Set to 0 for the most conservative result |
 
@@ -37,7 +42,7 @@ Open `index.html` in any browser. There's no build step and nothing to install.
 ## References
 
 - Peng, Z. et al. "Significant Production of Ozone from Germicidal UV Lights at 222 nm." *Environ. Sci. Technol. Lett.* 10, 668–674 (2023).
-- Link, M. F. et al. (NIST). "Ozone Generation from a Germicidal Ultraviolet Lamp with Peak Emission at 222 nm." *Environ. Sci. Technol. Lett.* (2023).
+- Link, M. F. et al. (NIST). "Ozone Generation from a Germicidal Ultraviolet Lamp with Peak Emission at 222 nm." *Environ. Sci. Technol. Lett.* 10(8), 675–679 (2023). doi:10.1021/acs.estlett.3c00318
 - Barber, V. P. et al. "Indoor Air Quality Implications of Germicidal 222 nm Light." *Environ. Sci. Technol.* 57, 15990 (2023).
 - Ushio Care222 module technical data sheet.
 
