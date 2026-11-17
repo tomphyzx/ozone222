@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ozone222 — Far-UVC Ozone vs. Ventilation Calculator</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#ffffff; --ink:#1b1f24; --muted:#5d6672; --line:#dde1e6;
+    --accent:#5b3fd1; --accent2:#0e8a7d; --warn:#b4471b; --ok:#1d7a3e; --hl:#efeafd;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#14161a; --panel:#1c1f24; --ink:#e8eaed; --muted:#9aa3ad; --line:#2e333a;
+      --accent:#a48cff; --accent2:#3cc7b6; --warn:#ff8a5c; --ok:#5fd38a; --hl:#2a2540; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{padding:28px 24px 8px;max-width:1180px;margin:0 auto}
+  h1{font-size:24px;margin:0 0 4px;letter-spacing:-.01em}
+  header p{margin:0;color:var(--muted);max-width:820px}
+  main{max-width:1180px;margin:0 auto;padding:16px 24px 40px;display:grid;grid-template-columns:340px 1fr;gap:20px}
+  @media (max-width:860px){main{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:4px 0 10px}
+  .panel h2:not(:first-child){margin-top:18px}
+  label{display:grid;grid-template-columns:1fr 110px;align-items:center;gap:8px;margin:6px 0;font-size:14px}
+  label small{display:block;color:var(--muted);font-size:12px;line-height:1.3}
+  input,select{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;font-variant-numeric:tabular-nums}
+  .seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:8px}
+  .seg button{flex:1;padding:6px;border:0;background:transparent;color:var(--muted);font:inherit;cursor:pointer}
+  .seg button.on{background:var(--accent);color:#fff}
+  details{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  summary{cursor:pointer;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .kpi .v{font-size:24px;font-weight:650;font-variant-numeric:tabular-nums}
+  .kpi .l{font-size:12px;color:var(--muted)}
+  svg text{fill:var(--muted);font-size:11px}
+  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
+  th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
+  th{color:var(--muted);font-weight:500;font-size:12px}
+  th:first-child,td:first-child{text-align:left}
+  tr.ok td:last-child{color:var(--ok)} tr.over td:last-child{color:var(--warn)}
+  tr.max{background:var(--hl)}
+  .note{color:var(--muted);font-size:13px}
+  .note code{font-size:12px}
+  footer{max-width:1180px;margin:0 auto;padding:0 24px 32px;color:var(--muted);font-size:12.5px}
+  footer h3{font-size:13px;color:var(--ink);margin:18px 0 4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>ozone222 <span style="font-weight:400;color:var(--muted)">· far-UVC ozone vs. ventilation</span></h1>
+  <p>How many outdoor-air changes per hour (ACH) keep the ozone <em>added</em> by ceiling-mounted 222 nm modules at or below a target, for 1 to N modules in a room of given size. Steady-state, well-mixed room, first-principles O<sub>2</sub> photolysis.</p>
+</header>
+
+<main>
+<section class="panel" id="inputs">
+  <h2>Room</h2>
+  <div class="seg" id="units"><button data-u="ft" class="on">feet</button><button data-u="m">metres</button></div>
+  <label>Length <input id="L" type="number" step="0.1" value="16"></label>
+  <label>Width <input id="W" type="number" step="0.1" value="14"></label>
+  <label>Ceiling height <input id="H" type="number" step="0.1" value="9"></label>
+
+  <h2>222 nm modules</h2>
+  <label>Module
+    <select id="mod">
+      <option value="b1">Ushio Care222 B1 (60°)</option>
+      <option value="b15">Ushio Care222 B1.5 (110°)</option>
+      <option value="custom">Custom</option>
+    </select></label>
+  <label>Optical output per module<small>W of 200–230 nm UV</small><input id="P" type="number" step="0.005" value="0.11"></label>
+  <label>Path-length factor<small>mean path ÷ ceiling height</small><input id="pf" type="number" step="0.01" value="1.05"></label>
+  <label>Duty cycle<small>% of time on</small><input id="duty" type="number" step="1" value="100"></label>
+  <label>Max modules to show <input id="N" type="number" step="1" value="10"></label>
+
+  <h2>Target and other sinks</h2>
+  <label>Target added O<sub>3</sub><small>ppb (5 ppb limit − 1 ppb margin)</small><input id="tgt" type="number" step="0.1" value="4"></label>
+  <label>Surface deposition<small>h⁻¹ (0 = most conservative)</small><input id="kd" type="number" step="0.1" value="1"></label>
+  <label>Room's actual outdoor-air ACH<small>optional, highlights the max modules</small><input id="ach" type="number" step="0.1" value="2"></label>
+
+  <details>
+    <summary>Optional: upper-room 254 nm</summary>
+    <label>254 nm UV output<small>W emitted into air</small><input id="P254" type="number" step="0.1" value="0"></label>
+    <label>Throw length<small>same units as room</small><input id="L254" type="number" step="0.1" value="16"></label>
+    <label>Net O₃ loss yield Φ<small>0.1–0.3 in humid air</small><input id="phi" type="number" step="0.05" value="0.2"></label>
+  </details>
+</section>
+
+<section>
+  <div class="kpis">
+    <div class="kpi"><div class="v" id="kG">–</div><div class="l">O₃ generated per module (ppb/h)</div></div>
+    <div class="kpi"><div class="v" id="kA">–</div><div class="l">Extra ACH needed per module</div></div>
+    <div class="kpi"><div class="v" id="kF">–</div><div class="l">Room-avg 222 nm fluence per module (µW/cm²)</div></div>
+    <div class="kpi"><div class="v" id="kM">–</div><div class="l">Max modules at the room's ACH</div></div>
+  </div>
+  <div class="panel">
+    <h2>Required outdoor-air ACH vs. number of modules</h2>
+    <svg id="chart" viewBox="0 0 720 300" width="100%" role="img" aria-label="Required ACH vs modules"></svg>
+  </div>
+  <div class="panel" style="margin-top:16px">
+    <h2>Table</h2>
+    <table id="tbl"><thead><tr>
+      <th>Modules</th><th>O₃ made (ppb/h)</th><th>Room-avg fluence (µW/cm²)</th>
+      <th>Added O₃ at room ACH (ppb)</th><th>Required ACH</th></tr></thead><tbody></tbody></table>
+    <p class="note">Rows highlighted are the most modules the room's ACH supports at the target.</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <h3>Model</h3>
+  <p>Generation G = 2·σ<sub>O₂</sub>·[O₂]·(photon rate)·L/V, with σ<sub>O₂</sub>(222 nm) = 4.09×10⁻²⁴ cm², 2 O₃ per absorbed photon, 25 °C and 1 atm. Steady state: ΔO₃ = G / (ACH + k<sub>dep</sub> + k<sub>254</sub>), so required ACH = G/target − k<sub>dep</sub> − k<sub>254</sub>. 254 nm removal is k<sub>254</sub> = Φ·σ<sub>O₃</sub>(254)·(photon rate)·L<sub>254</sub>/V, with σ<sub>O₃</sub> = 1.13×10⁻¹⁷ cm².</p>
+  <h3>Assumptions and limits</h3>
+  <p>The room is well mixed and the gas is optically thin. Light is absorbed at the floor and walls, with no reflection. ACH means outdoor (ozone-free) air: recirculated air does not remove ozone unless it passes activated carbon. The result is ozone added on top of outdoor background. Module outputs are estimates from Ushio's on-axis irradiance and beam angle (B1 ≈ 0.11 W, B1.5 ≈ 0.05 W); measure or use the manufacturer's total-output figure if you have it. This tool does not check occupant exposure limits. Not a substitute for measurement.</p>
+  <h3>References</h3>
+  <p>Peng et al., <i>ES&amp;T Letters</i> 10, 668 (2023); Link et al. (NIST), <i>ES&amp;T Letters</i> (2023); Barber et al., <i>ES&amp;T</i> 57, 15990 (2023); Ushio Care222 technical data sheet.</p>
+  <p>ozone222 · tomPhyzx · MIT License</p>
+</footer>
+
+<script>
+const h=6.62607015e-34, c=2.99792458e8, kB=1.380649e-23;
+const nAir = 101325/(kB*298.15)/1e6;        // molecules/cm3
+const nO2 = 0.2095*nAir;
+const sO2 = 4.09e-24, sO3_254 = 1.13e-17;
+const ppb = nAir*1e-9;
+const MODS = { b1:{P:0.11,pf:1.05}, b15:{P:0.05,pf:1.25} };
+let units='ft';
+const $=id=>document.getElementById(id);
+const toM = v => units==='ft' ? v*0.3048 : v;
+
+document.querySelectorAll('#units button').forEach(b=>b.onclick=()=>{
+  const nu=b.dataset.u; if(nu===units) return;
+  const f = nu==='m' ? 0.3048 : 1/0.3048;
+  ['L','W','H','L254'].forEach(id=>{ $(id).value = (+$(id).value*f).toFixed(2).replace(/\.?0+$/,''); });
+  units=nu;
+  document.querySelectorAll('#units button').forEach(x=>x.classList.toggle('on',x===b));
+  calc();
+});
+$('mod').onchange=()=>{ const m=MODS[$('mod').value]; if(m){ $('P').value=m.P; $('pf').value=m.pf; } calc(); };
+['P','pf'].forEach(id=>$(id).addEventListener('input',()=>{ $('mod').value='custom'; }));
+document.querySelectorAll('input').forEach(i=>i.addEventListener('input',calc));
+
+function fmt(x,d=1){ return isFinite(x) ? x.toFixed(d) : '–'; }
+
+function calc(){
+  const L=toM(+$('L').value), W=toM(+$('W').value), H=toM(+$('H').value);
+  const V = L*W*H*1e6;                                 // cm3
+  const P = +$('P').value * (+$('duty').value/100);    // avg W per module
+  const path = H*100*(+$('pf').value);                 // cm
+  const phot222 = P*222e-9/(h*c);                      // photons/s per module
+  const G1 = 2*sO2*nO2*phot222*path/V*3600/ppb;        // ppb/h per module
+  const F1 = P*path/V*1e6;                             // µW/cm2 room avg
+  const phot254 = (+$('P254').value)*254e-9/(h*c);
+  const k254 = (+$('phi').value)*sO3_254*phot254*toM(+$('L254').value)*100/V*3600;
+  const kd=+$('kd').value, tgt=+$('tgt').value, ach=+$('ach').value, N=Math.max(1,Math.min(50,Math.round(+$('N').value)));
+
+  const rows=[]; let maxN=0;
+  for(let n=1;n<=N;n++){
+    const G=n*G1, req=Math.max(0,G/tgt-kd-k254);
+    const at = (ach+kd+k254)>0 ? G/(ach+kd+k254) : Infinity;
+    if(at<=tgt+1e-9) maxN=n;
+    rows.push({n,G,F:n*F1,req,at});
+  }
+  // max modules analytically (may exceed N)
+  const maxAll = Math.floor(tgt*(ach+kd+k254)/G1 + 1e-9);
+
+  $('kG').textContent=fmt(G1,2);
+  $('kA').textContent=fmt(G1/tgt,2);
+  $('kF').textContent=fmt(F1,2);
+  $('kM').textContent= isFinite(maxAll) ? maxAll : '–';
+
+  const tb=$('tbl').querySelector('tbody'); tb.innerHTML='';
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.className=(r.at<=tgt+1e-9?'ok':'over')+(r.n===maxAll?' max':'');
+    tr.innerHTML=`<td>${r.n}</td><td>${fmt(r.G)}</td><td>${fmt(r.F,2)}</td><td>${fmt(r.at)}</td><td>${fmt(r.req,2)}</td>`;
+    tb.appendChild(tr);
+  });
+  draw(rows, ach);
+}
+
+function draw(rows, ach){
+  const s=$('chart'), w=720, hgt=300, m={l:48,r:16,t:14,b:38};
+  const N=rows.length, ymax=Math.max(1, ...rows.map(r=>r.req), ach)*1.1;
+  const X=n=>m.l+(n-1)/(Math.max(1,N-1))*(w-m.l-m.r), Y=v=>hgt-m.b-v/ymax*(hgt-m.t-m.b);
+  const step=niceStep(ymax/5);
+  let g='';
+  for(let v=0; v<=ymax; v+=step){ g+=`<line x1="${m.l}" x2="${w-m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${m.l-6}" y="${Y(v)+4}" text-anchor="end">${+v.toFixed(2)}</text>`; }
+  rows.forEach(r=>{ g+=`<text x="${X(r.n)}" y="${hgt-m.b+16}" text-anchor="middle">${r.n}</text>`; });
+  g+=`<text x="${(w+m.l)/2}" y="${hgt-4}" text-anchor="middle">number of 222 nm modules</text>`;
+  g+=`<text transform="translate(12,${(hgt-m.b+m.t)/2}) rotate(-90)" text-anchor="middle">required ACH (h⁻¹)</text>`;
+  if(ach>0){ g+=`<line x1="${m.l}" x2="${w-m.r}" y1="${Y(ach)}" y2="${Y(ach)}" stroke="var(--accent2)" stroke-dasharray="5 4" stroke-width="1.5"/><text x="${w-m.r}" y="${Y(ach)-6}" text-anchor="end" style="fill:var(--accent2)">room ACH ${ach}</text>`; }
+  const pts=rows.map(r=>`${X(r.n)},${Y(r.req)}`).join(' ');
+  g+=`<polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>`;
+  rows.forEach(r=>{ g+=`<circle cx="${X(r.n)}" cy="${Y(r.req)}" r="3.5" fill="var(--accent)"><title>${r.n} modules: ${r.req.toFixed(2)} ACH</title></circle>`; });
+  s.innerHTML=g;
+}
+function niceStep(x){ const p=Math.pow(10,Math.floor(Math.log10(x))); const f=x/p; return (f<1.5?1:f<3?2:f<7?5:10)*p; }
+calc();
+</script>
+</body>
+</html>
