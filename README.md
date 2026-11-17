@@ -1,10 +1,13 @@
 # ozone222 — Far-UVC Ozone vs. Ventilation Calculator
 
-A single-page calculator for one question: **how many outdoor-air changes per hour (ACH) keep the ozone *added* by ceiling-mounted 222 nm (far-UVC) modules at or below a target?** It shows the answer for 1 to N modules in a room of given length, width and height.
+[![GitHub stars](https://img.shields.io/github/stars/tomphyzx/ozone222?style=social)](https://github.com/tomphyzx/ozone222)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **Live calculator:** https://tomphyzx.github.io/ozone222/
 
-Or open `index.html` in any browser. There's no build step and nothing to install.
+A single-page calculator for one question: **how many outdoor-air changes per hour (ACH) keep the ozone *added* by ceiling-mounted 222 nm (far-UVC) modules at or below a target?** It shows the answer for 1 to N modules in a room of given length, width and height.
+
+To run it locally, open `index.html` in any browser. There's no build step and nothing to install.
 
 ## Model
 
@@ -45,6 +48,12 @@ Or open `index.html` in any browser. There's no build step and nothing to instal
 - Link, M. F. et al. (NIST). "Ozone Generation from a Germicidal Ultraviolet Lamp with Peak Emission at 222 nm." *Environ. Sci. Technol. Lett.* 10(8), 675–679 (2023). doi:10.1021/acs.estlett.3c00318
 - Barber, V. P. et al. "Indoor Air Quality Implications of Germicidal 222 nm Light." *Environ. Sci. Technol.* 57, 15990 (2023).
 - Ushio Care222 module technical data sheet.
+
+## Contributing
+
+- **Issues are welcome**, especially better lamp output data or measured ozone results: https://github.com/tomphyzx/ozone222/issues
+- **To experiment:** fork the repo, clone it, and open `index.html` in a browser. There's no build step.
+- **Pull requests:** keep the page a single self-contained file. A change to a physics constant or to the model should cite a source in the PR description.
 
 ## License
 
