@@ -31,7 +31,18 @@ To run it locally, open `index.html` in any browser. There's no build step and n
 | Path-length factor | 1.05 (B1), 1.25 (B1.5) | Mean optical path ÷ ceiling height |
 | Duty cycle | 100% | |
 | Target | 4 ppb | 5 ppb limit minus a 1 ppb margin |
-| Surface deposition | 1 h⁻¹ | Set to 0 for the most conservative result |
+| Surface deposition | 3 h⁻¹ | ASHRAE 241P Table A-3. Set to 0 for the most conservative result |
+
+## ASHRAE 241P checks
+
+The page also checks the room against two ozone provisions of the ASHRAE 241P draft. Both use the same well-mixed mass balance as the rest of the calculator.
+
+- **Per-device cap (Table A-2).** A device's ozone generation must be below 400 µg/h, measured in an ASTM D8625 chamber. The page shows the module's mass rate in µg/h (O₃ molecules per second × 48 g/mol ÷ N_A) and marks it against 400.
+- **Room check (Eq. A-2).** `V_min = G_tot / ((λ + L) · ΔC)`, where λ is the outdoor-air ACH, L is the ozone deposition rate (3 h⁻¹ in Table A-3) and ΔC = 10 µg/m³ (5 ppb at 20 °C). The table shows V_min for 1 to N modules and whether the room is at least that large.
+
+**Generation depends on the room, not only the device.** At 222 nm, ozone comes from O₂ absorbing along the beam, so the rate per module scales with the optical path. The same module makes more ozone under a 10 ft ceiling than under an 8 ft one, and the page shows both figures next to the µg/h tile.
+
+Based on the BSR/ASHRAE Standard 241P second public review draft (Sept 2026). This is an informal check, not a compliance determination.
 
 ## Limits
 
@@ -48,6 +59,7 @@ To run it locally, open `index.html` in any browser. There's no build step and n
 - Link, M. F. et al. (NIST). "Ozone Generation from a Germicidal Ultraviolet Lamp with Peak Emission at 222 nm." *Environ. Sci. Technol. Lett.* 10(8), 675–679 (2023). doi:10.1021/acs.estlett.3c00318
 - Barber, V. P. et al. "Indoor Air Quality Implications of Germicidal 222 nm Light." *Environ. Sci. Technol.* 57, 15990 (2023).
 - Ushio Care222 module technical data sheet.
+- BSR/ASHRAE Standard 241P, *Control of Infectious Aerosols*, Second Public Review Draft (Sept 2026), Sections 4.1.1, A3.1.1.2–A3.1.1.3, Tables A-2 and A-3.
 
 ## Contributing
 

@@ -40,7 +40,7 @@
   .seg button.on{background:var(--accent);color:#fff}
   details{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
   summary{cursor:pointer;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.06em}
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
   .kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
   .kpi .v{font-size:24px;font-weight:650;font-variant-numeric:tabular-nums}
   .kpi .l{font-size:12px;color:var(--muted)}
@@ -49,7 +49,12 @@
   th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
   th{color:var(--muted);font-weight:500;font-size:12px}
   th:first-child,td:first-child{text-align:left}
-  tr.ok td:last-child{color:var(--ok)} tr.over td:last-child{color:var(--warn)}
+  tr.ok td:nth-child(5){color:var(--ok)} tr.over td:nth-child(5){color:var(--warn)}
+  main>*{min-width:0}                                  /* let the table scroll instead of widening the page */
+  .scroll{overflow-x:auto}
+  td:nth-child(6){white-space:nowrap}
+  @media (max-width:520px){ table{font-size:12.5px} th,td{padding:6px 3px} th{font-size:11px} }
+  #chk p{margin:6px 0;font-size:14px}
   tr.max{background:var(--hl)}
   .note{color:var(--muted);font-size:13px}
   .note code{font-size:12px}
@@ -88,7 +93,7 @@
 
   <h2>Target and other sinks</h2>
   <label>Target added O₃<small>ppb (5 ppb limit − 1 ppb margin)</small><input id="tgt" type="number" step="0.1" value="4"></label>
-  <label>Surface deposition<small>h⁻¹ (0 = most conservative)</small><input id="kd" type="number" step="0.1" value="1"></label>
+  <label>Surface deposition<small>h⁻¹ (ASHRAE 241P Table A-3 uses 3; 0 = most conservative)</small><input id="kd" type="number" step="0.1" value="3"></label>
   <label>Room's actual outdoor-air ACH<small>optional, highlights the max modules</small><input id="ach" type="number" step="0.1" value="2"></label>
 
   <details>
@@ -102,34 +107,43 @@
 <section>
   <div class="kpis">
     <div class="kpi"><div class="v" id="kG">–</div><div class="l">O₃ generated per module (ppb/h)</div></div>
+    <div class="kpi"><div class="v" id="kU">–</div><div class="l">O₃ per module (µg/h)</div><div class="l">241P device cap: 400 µg/h</div></div>
     <div class="kpi"><div class="v" id="kA">–</div><div class="l">Extra ACH needed per module</div></div>
     <div class="kpi"><div class="v" id="kF">–</div><div class="l">Room-avg 222 nm fluence per module (µW/cm²)</div></div>
     <div class="kpi"><div class="v" id="kM">–</div><div class="l">Max modules at the room's ACH</div><div class="l" id="kMnote" style="color:var(--warn)"></div></div>
   </div>
+  <p class="note" id="pathNote" style="margin:-6px 0 14px"></p>
   <div class="panel">
     <h2>Required outdoor-air ACH vs. number of modules</h2>
     <svg id="chart" viewBox="0 0 720 300" width="100%" role="img" aria-label="Required ACH vs modules"></svg>
   </div>
   <div class="panel" style="margin-top:16px">
     <h2>Table</h2>
-    <table id="tbl"><thead><tr>
+    <div class="scroll"><table id="tbl"><thead><tr>
       <th>Modules</th><th>O₃ made (ppb/h)</th><th>Room-avg fluence (µW/cm²)</th>
-      <th>Added O₃ at room ACH (ppb)</th><th>Required ACH</th></tr></thead><tbody></tbody></table>
-    <p class="note">Rows highlighted are the most modules the room's ACH supports at the target.</p>
+      <th>Added O₃ at room ACH (ppb)</th><th>Required ACH</th><th>241P Vmin (m³)</th></tr></thead><tbody></tbody></table></div>
+    <p class="note">Rows highlighted are the most modules the room's ACH supports at the target. 241P Vmin is the smallest room volume Eq. A-2 allows for that many modules: ✓ if this room is at least that large, ✗ if not.</p>
+  </div>
+  <div class="panel" id="chk" style="margin-top:16px">
+    <h2>ASHRAE 241P check</h2>
+    <p id="c1"></p>
+    <p id="c2"></p>
+    <p id="c3"></p>
+    <p class="note">Based on the BSR/ASHRAE Standard 241P second public review draft (Sept 2026). Informal check, not a compliance determination.</p>
   </div>
 </section>
 </main>
 
 <footer>
   <h3>Model</h3>
-  <p>Generation G = 2·σ<sub>O₂</sub>·[O₂]·(photon rate)·L/V, with σ<sub>O₂</sub>(222 nm) = 4.09×10⁻²⁴ cm², 2 O₃ per absorbed photon, 25 °C and 1 atm. Steady state: ΔO₃ = G / (ACH + k<sub>dep</sub> + k<sub>254</sub>), so required ACH = G/target − k<sub>dep</sub> − k<sub>254</sub>. 254 nm removal is k<sub>254</sub> = Φ·σ<sub>O₃</sub>(254)·(photon rate)·L<sub>254</sub>/V, with σ<sub>O₃</sub> = 1.13×10⁻¹⁷ cm².</p>
+  <p>Generation G = 2·σ<sub>O₂</sub>·[O₂]·(photon rate)·L/V, with σ<sub>O₂</sub>(222 nm) = 4.09×10⁻²⁴ cm², 2 O₃ per absorbed photon, 25 °C and 1 atm. Steady state: ΔO₃ = G / (ACH + k<sub>dep</sub> + k<sub>254</sub>), so required ACH = G/target − k<sub>dep</sub> − k<sub>254</sub>. 254 nm removal is k<sub>254</sub> = Φ·σ<sub>O₃</sub>(254)·(photon rate)·L<sub>254</sub>/V, with σ<sub>O₃</sub> = 1.13×10⁻¹⁷ cm². Mass rate per module (µg/h) = O₃ molecules per second × 48 g/mol ÷ N<sub>A</sub>. ASHRAE 241P Eq. A-2: V<sub>min</sub> = G<sub>tot</sub> / ((λ + L)·ΔC), with λ the outdoor-air ACH, L the deposition rate and ΔC = 10 µg/m³.</p>
   <h3>Assumptions and limits</h3>
   <p>The room is well mixed and the gas is optically thin. Light is absorbed at the floor and walls, with no reflection. ACH means outdoor (ozone-free) air: recirculated air does not remove ozone unless it passes activated carbon. The result is ozone added on top of outdoor background. Module outputs are estimates from Ushio's on-axis irradiance and beam angle (B1 ≈ 0.11 W, B1.5 ≈ 0.05 W); measure or use the manufacturer's total-output figure if you have it. This tool does not check occupant exposure limits. Not a substitute for measurement.</p>
   <h3>Open source</h3>
   <p>ozone222 is open source under the MIT License. If it's useful to you, ⭐ <a href="https://github.com/tomphyzx/ozone222">star the repo</a>. Found a problem or have better lamp data? <a href="https://github.com/tomphyzx/ozone222/issues">Open an issue</a>. Want to experiment? <a href="https://github.com/tomphyzx/ozone222/fork">Fork it</a> or clone it. It's a single HTML file with no build step.<br>
   <code>git clone https://github.com/tomphyzx/ozone222.git</code></p>
   <h3>References</h3>
-  <p>Peng et al., <i>ES&amp;T Letters</i> 10, 668 (2023); Link et al. (NIST), <i>ES&amp;T Letters</i> 10(8), 675 (2023), doi:10.1021/acs.estlett.3c00318; Barber et al., <i>ES&amp;T</i> 57, 15990 (2023); Ushio Care222 technical data sheet.</p>
+  <p>Peng et al., <i>ES&amp;T Letters</i> 10, 668 (2023); Link et al. (NIST), <i>ES&amp;T Letters</i> 10(8), 675 (2023), doi:10.1021/acs.estlett.3c00318; Barber et al., <i>ES&amp;T</i> 57, 15990 (2023); Ushio Care222 technical data sheet; BSR/ASHRAE Standard 241P, <i>Control of Infectious Aerosols</i>, Second Public Review Draft (Sept 2026), Sections 4.1.1, A3.1.1.2–A3.1.1.3, Tables A-2 and A-3.</p>
   <p>ozone222 · tomPhyzx · MIT License · <a href="https://github.com/tomphyzx/ozone222">github.com/tomphyzx/ozone222</a></p>
 </footer>
 
@@ -138,6 +152,8 @@ const h=6.62607015e-34, c=2.99792458e8, kB=1.380649e-23;
 const nAir = 101325/(kB*298.15)/1e6;        // molecules/cm3
 const nO2 = 0.2095*nAir;
 const sO2 = 4.09e-24, sO3_254 = 1.13e-17;
+const NA = 6.02214076e23, M_O3 = 48;        // mol⁻¹, g/mol
+const CAP241 = 400, DC241 = 10;             // ASHRAE 241P: Table A-2 device cap (µg/h), Eq. A-2 ΔC (µg/m³)
 const ppb = nAir*1e-9;
 const MODS = { b1:{P:0.11,pf:1.05}, b15:{P:0.05,pf:1.25} };
 let units='ft';
@@ -193,6 +209,9 @@ function calc(){
   const phot222 = P*222e-9/(h*c);                      // photons/s per module
   const G1 = 2*sO2*nO2*phot222*path/V*3600/ppb;        // ppb/h per module
   const F1 = P*path/V*1e6;                             // µW/cm2 room avg
+  // Mass rate per module (µg/h) under a ceiling of height Hm: molecules/s × 48 g/mol ÷ N_A
+  const ugAt = Hm => 2*sO2*nO2*phot222*(Hm*100*pf)*M_O3/NA*1e6*3600;
+  const ug1 = ugAt(H), roomOK = L>0 && W>0 && H>0, Vm3 = V/1e6;
   const P254 = limit('P254', num('P254'), 0, Infinity, 'Negative power treated as 0');
   const phi = limit('phi', num('phi'), 0, 1, 'Φ limited to 0–1');
   const phot254 = P254*254e-9/(h*c);
@@ -214,6 +233,17 @@ function calc(){
   $('kF').textContent=fmt(F1,2);
   $('kM').textContent= showMax ? maxAll : '–';
   $('kMnote').textContent= hasAch ? '' : 'enter room ACH';
+  $('kU').textContent= roomOK ? fmt(ug1,1) : '–';
+  $('kU').style.color= !roomOK ? '' : ug1<CAP241 ? 'var(--ok)' : 'var(--warn)';
+  $('pathNote').textContent=`Scales with path length: same module ≈ ${fmt(ugAt(8*FT),0)} µg/h at 8 ft, ${fmt(ugAt(10*FT),0)} µg/h at 10 ft ceiling`;
+
+  // ASHRAE 241P Eq. A-2, per module: Vmin = G / ((λ + L)·ΔC), in m3
+  const vmin1 = ug1/((ach+kd)*DC241), roomChk = roomOK && hasAch;
+  const fit = Math.floor(Vm3/vmin1 + 1e-9);
+  const mods = (ok,n) => !(ok && isFinite(n)) ? '– modules' : n===1 ? '1 module' : n+' modules';
+  $('c1').textContent=`Per-device cap (Table A-2, < ${CAP241} µg/h): this module makes ${roomOK?fmt(ug1,1):'–'} µg/h in this room → ${!roomOK ? '–' : ug1<CAP241 ? 'passes' : 'exceeds'}.`;
+  $('c2').textContent=`Room check (Eq. A-2, λ = ${hasAch?ach:'–'} ACH, L = ${kd} h⁻¹, ΔC = ${DC241} µg/m³): up to ${mods(roomChk,fit)} fit this room's ${roomOK?fmt(Vm3,1):'–'} m³.`;
+  $('c3').textContent=`Your target (${tgtOK?tgt:'–'} ppb): up to ${mods(showMax,maxAll)}.`;
 
   const tb=$('tbl').querySelector('tbody'); tb.innerHTML='';
   if(!tgtOK){
@@ -230,7 +260,9 @@ function calc(){
   rows.forEach(r=>{
     const tr=document.createElement('tr');
     if(hasAch) tr.className=(r.at<=tgt+1e-9?'ok':'over')+(r.n===maxAll?' max':'');
-    tr.innerHTML=`<td>${r.n}</td><td>${fmt(r.G)}</td><td>${fmt(r.F,2)}</td><td>${hasAch?fmt(r.at):'–'}</td><td>${fmt(r.req,2)}</td>`;
+    const vmin=r.n*vmin1, fits=vmin<=Vm3;
+    const vcell = !(roomChk && isFinite(vmin)) ? '–' : `${fmt(vmin,2)} <span style="color:var(--${fits?'ok':'warn'})">${fits?'✓':'✗'}</span>`;
+    tr.innerHTML=`<td>${r.n}</td><td>${fmt(r.G)}</td><td>${fmt(r.F,2)}</td><td>${hasAch?fmt(r.at):'–'}</td><td>${fmt(r.req,2)}</td><td>${vcell}</td>`;
     tb.appendChild(tr);
   });
   draw(rows, hasAch ? ach : 0);
